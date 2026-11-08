@@ -1,119 +1,269 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>タスク管理2</title>
-
-  <!-- PWA / スマホホーム画面用設定 -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="タスク管理2">
-  <meta name="theme-color" content="#1e293b">
-
-  <!-- Tailwind CSS & FontAwesome -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <style>
-    body {
-      -webkit-tap-highlight-color: transparent;
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
+<script>
+  // カテゴリ定義と配色
+  const CATEGORIES = {
+    work_task: {
+      label: '仕事タスク',
+      badgeClass: 'bg-blue-600 text-white'
+    },
+    life_task: {
+      label: '生活タスク',
+      badgeClass: 'bg-emerald-600 text-white'
+    },
+    work_knowledge: {
+      label: '仕事ナレッジ',
+      badgeClass: 'bg-sky-100 text-sky-800 border border-sky-300'
+    },
+    home_knowledge: {
+      label: '家庭ナレッジ',
+      badgeClass: 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+    },
+    yomoyama: {
+      label: 'よもやま',
+      badgeClass: 'bg-amber-500 text-slate-900 font-semibold'
     }
-    /* 横スクロールバーの非表示 */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
+  };
+
+  const STORAGE_KEY = 'taskflow_v2_storage';
+  let tasks = [];
+  try {
+    tasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch (e) {
+    tasks = [];
+  }
+
+  // フィルタ状態
+  let selectedPeriod = 'all';
+  let selectedCategory = 'all';
+  let showCompleted = false;
+
+  // DOM
+  const form = document.getElementById('todoForm');
+  const titleInput = document.getElementById('taskTitle');
+  const categoryInput = document.getElementById('taskCategory');
+  const dueDateInput = document.getElementById('taskDueDate');
+  const taskList = document.getElementById('taskList');
+  const taskCount = document.getElementById('taskCount');
+  const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+  const showActiveBtn = document.getElementById('showActiveBtn');
+  const showDoneBtn = document.getElementById('showDoneBtn');
+  const periodBtns = document.querySelectorAll('.period-btn');
+  const catBtns = document.querySelectorAll('.cat-btn');
+
+  function saveTasks() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    render();
+  }
+
+  // フィルターボタンスタイル更新
+  function updateFilterButtonsUI() {
+    periodBtns.forEach(b => {
+      const active = b.dataset.period === selectedPeriod;
+      b.className = `period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap ${
+        active ? 'bg-slate-800 text-white border-slate-800 shadow-sm' : 'bg-white text-slate-600 border-slate-200'
+      }`;
+    });
+
+    catBtns.forEach(b => {
+      const active = b.dataset.cat === selectedCategory;
+      b.className = `cat-btn px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap ${
+        active ? 'bg-slate-800 text-white border-slate-800 shadow-sm' : 'bg-white text-slate-600 border-slate-200'
+      }`;
+    });
+
+    showActiveBtn.className = `px-2.5 py-1 rounded-md font-medium transition-all ${
+      !showCompleted ? 'text-slate-800 bg-white shadow-sm' : 'text-slate-600'
+    }`;
+    showDoneBtn.className = `px-2.5 py-1 rounded-md font-medium transition-all ${
+      showCompleted ? 'text-slate-800 bg-white shadow-sm' : 'text-slate-600'
+    }`;
+  }
+
+  // タスク追加
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const title = titleInput.value.trim();
+    if (!title) return;
+
+    const newTask = {
+      id: Date.now(),
+      title: title,
+      category: categoryInput.value,
+      dueDate: dueDateInput.value || null,
+      completed: false,
+      createdAt: new Date().toISOString()
+    };
+
+    tasks.unshift(newTask);
+
+    // 登録直後は「未完了」一覧で確実に表示されるようフィルターをリセット
+    showCompleted = false;
+    selectedPeriod = 'all';
+    selectedCategory = 'all';
+    updateFilterButtonsUI();
+
+    titleInput.value = '';
+    dueDateInput.value = '';
+    saveTasks();
+  });
+
+  window.toggleTask = function(id) {
+    tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+    saveTasks();
+  };
+
+  window.deleteTask = function(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    saveTasks();
+  };
+
+  clearCompletedBtn.addEventListener('click', () => {
+    if (confirm('完了済みの項目をすべて削除しますか？')) {
+      tasks = tasks.filter(t => !t.completed);
+      saveTasks();
     }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
+  });
+
+  showActiveBtn.addEventListener('click', () => {
+    showCompleted = false;
+    updateFilterButtonsUI();
+    render();
+  });
+
+  showDoneBtn.addEventListener('click', () => {
+    showCompleted = true;
+    updateFilterButtonsUI();
+    render();
+  });
+
+  periodBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedPeriod = btn.dataset.period;
+      updateFilterButtonsUI();
+      render();
+    });
+  });
+
+  catBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedCategory = btn.dataset.cat;
+      updateFilterButtonsUI();
+      render();
+    });
+  });
+
+  // 日付補助: YYYY-MM-DD 文字列を返す
+  function formatYMD(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  // 時期判定（文字列ベースで安全に比較）
+  function matchesPeriod(dueDateStr, period) {
+    if (period === 'all') return true;
+    if (!dueDateStr) return false;
+
+    const today = new Date();
+    const todayStr = formatYMD(today);
+
+    if (period === 'today') {
+      return dueDateStr <= todayStr;
     }
-  </style>
-</head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
 
-  <!-- ヘッダー -->
-  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30">
-    <div class="max-w-xl mx-auto px-4 py-3.5 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <i class="fa-solid fa-layer-group text-sky-400 text-lg"></i>
-        <h1 class="font-bold text-base tracking-wide">タスク管理 2</h1>
-      </div>
-      <span id="taskCount" class="text-xs bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full">0 件</span>
-    </div>
-  </header>
+    if (period === 'tomorrow') {
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      return dueDateStr <= formatYMD(tomorrow);
+    }
 
-  <!-- メインコンテンツ -->
-  <main class="max-w-xl mx-auto w-full px-4 py-4 flex-1 flex flex-col gap-4">
+    if (period === 'this_week') {
+      const day = today.getDay(); // 0(日)〜6(土)
+      const daysUntilSunday = (7 - day) % 7;
+      const sunday = new Date(today);
+      sunday.setDate(today.getDate() + daysUntilSunday);
+      return dueDateStr <= formatYMD(sunday);
+    }
 
-    <!-- 入力フォーム -->
-    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-      <form id="todoForm" class="flex flex-col gap-3">
-        <input 
-          type="text" 
-          id="taskTitle" 
-          placeholder="タスク・ナレッジを入力..." 
-          required 
-          class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-700 text-sm placeholder:text-slate-400"
-        >
-        
-        <div class="grid grid-cols-2 gap-2">
-          <!-- カテゴリ選択 -->
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-500 mb-1">カテゴリ</label>
-            <select 
-              id="taskCategory" 
-              class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-700 font-medium"
-            >
-              <option value="work_task">仕事タスク</option>
-              <option value="life_task">生活タスク</option>
-              <option value="home_knowledge">家庭ナレッジ</option>
-              <option value="work_knowledge">仕事ナレッジ</option>
-              <option value="yomoyama">よもやま</option>
-            </select>
+    if (period === 'this_month') {
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return dueDateStr <= formatYMD(lastDay);
+    }
+
+    return true;
+  }
+
+  // 描画
+  function render() {
+    let filtered = tasks.filter(t => Boolean(t.completed) === showCompleted);
+
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(t => t.category === selectedCategory);
+    }
+
+    if (selectedPeriod !== 'all') {
+      filtered = filtered.filter(t => matchesPeriod(t.dueDate, selectedPeriod));
+    }
+
+    const activeTotal = tasks.filter(t => !t.completed).length;
+    taskCount.textContent = `未完了 ${activeTotal} 件`;
+    clearCompletedBtn.classList.toggle('hidden', !tasks.some(t => t.completed));
+
+    if (filtered.length === 0) {
+      taskList.innerHTML = `
+        <div class="text-center py-12 text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
+          <i class="fa-regular fa-folder-open text-3xl mb-2 stroke-1"></i>
+          <p class="text-xs">該当する項目はありません</p>
+        </div>
+      `;
+      return;
+    }
+
+    taskList.innerHTML = filtered.map(t => {
+      const catConfig = CATEGORIES[t.category] || CATEGORIES.work_task;
+      return `
+        <li class="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-sm flex items-start gap-3 transition-all">
+          <button onclick="toggleTask(${t.id})" class="mt-0.5 text-lg ${t.completed ? 'text-slate-400' : 'text-slate-300 hover:text-slate-500'}">
+            <i class="fa-${t.completed ? 'solid fa-circle-check text-slate-500' : 'regular fa-circle'}"></i>
+          </button>
+          
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium leading-relaxed break-words ${t.completed ? 'line-through text-slate-400' : 'text-slate-800'}">
+              ${escapeHtml(t.title)}
+            </p>
+            
+            <div class="flex flex-wrap items-center gap-2 mt-2">
+              <span class="text-[10px] px-2 py-0.5 rounded-md ${catConfig.badgeClass}">
+                ${catConfig.label}
+              </span>
+
+              ${t.dueDate ? `
+                <span class="text-[11px] text-slate-500 flex items-center gap-1 font-sans">
+                  <i class="fa-regular fa-calendar text-[10px]"></i> ${t.dueDate}
+                </span>
+              ` : `
+                <span class="text-[10px] text-slate-400">期日なし</span>
+              `}
+            </div>
           </div>
 
-          <!-- 期日選択 -->
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-500 mb-1">期日 (任意)</label>
-            <input 
-              type="date" 
-              id="taskDueDate" 
-              class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-700"
-            >
-          </div>
-        </div>
+          <button onclick="deleteTask(${t.id})" class="text-slate-300 hover:text-rose-500 p-1">
+            <i class="fa-regular fa-trash-can text-sm"></i>
+          </button>
+        </li>
+      `;
+    }).join('');
+  }
 
-        <button 
-          type="submit" 
-          class="mt-1 w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.98] transition-all text-white font-medium py-2.5 rounded-xl text-sm shadow-sm flex items-center justify-center gap-1.5"
-        >
-          <i class="fa-solid fa-plus text-xs"></i> 登録する
-        </button>
-      </form>
-    </section>
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
 
-    <!-- フィルターセクション -->
-    <section class="flex flex-col gap-2.5">
-      <!-- 時期フィルター -->
-      <div>
-        <div class="text-[11px] font-semibold text-slate-500 px-1 mb-1.5 flex items-center gap-1">
-          <i class="fa-regular fa-clock text-[10px]"></i> 時期で絞り込み
-        </div>
-        <div class="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-          <button class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-slate-800 text-white border-slate-800 shadow-sm" data-period="all">すべて</button>
-          <button class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-period="today">今日中</button>
-          <button class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-period="tomorrow">明日中</button>
-          <button class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-period="this_week">今週中</button>
-          <button class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-period="this_month">今月中</button>
-        </div>
-      </div>
-
-      <!-- カテゴリフィルター -->
-      <div>
-        <div class="text-[11px] font-semibold text-slate-500 px-1 mb-1.5 flex items-center gap-1">
-          <i class="fa-regular fa-folder text-[10px]"></i> カテゴリで絞り込み
-        </div>
-        <div class="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-          <button class="cat-btn px-2.5 py-1.5 rounded-lg
+  updateFilterButtonsUI();
+  render();
+</script>
