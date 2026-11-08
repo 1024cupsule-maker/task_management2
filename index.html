@@ -5,15 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>タスク管理2</title>
 
-  <!-- PWA / スマホ設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="タスク管理2">
   <meta name="theme-color" content="#0f172a">
 
-  <!-- Tailwind CSS & FontAwesome -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
     body {
@@ -31,7 +28,7 @@
   <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30">
     <div class="max-w-xl mx-auto px-4 py-3.5 flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <i class="fa-solid fa-layer-group text-sky-400 text-lg"></i>
+        <span class="text-sky-400 text-xl font-bold">❖</span>
         <h1 class="font-bold text-base tracking-wide">タスク管理 2</h1>
       </div>
       <span id="taskCountBadge" class="text-xs bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full">未完了 0 件</span>
@@ -44,10 +41,337 @@
     <!-- 入力フォーム -->
     <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
       <form id="todoForm" class="flex flex-col gap-3">
-        <input 
-          type="text" 
-          id="taskTitle" 
-          placeholder="タスク・ナレッジを入力..." 
-          required 
-          autocomplete="off"
-          class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-700 text-sm placeholder:text-slate-400
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-500 mb-1">タスク名・ナレッジ内容</label>
+          <input 
+            type="text" 
+            id="taskTitle" 
+            placeholder="例: 会議資料の作成、洗剤の詰め替え..." 
+            required 
+            autocomplete="off"
+            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-700 text-sm"
+          >
+        </div>
+        
+        <div class="grid grid-cols-2 gap-2">
+          <!-- カテゴリ選択 -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 mb-1">カテゴリ</label>
+            <select 
+              id="taskCategory" 
+              class="w-full px-2 py-2.5 rounded-xl border border-slate-300 text-xs bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-700 font-medium"
+            >
+              <option value="work_task">仕事タスク</option>
+              <option value="life_task">生活タスク</option>
+              <option value="home_knowledge">家庭ナレッジ</option>
+              <option value="work_knowledge">仕事ナレッジ</option>
+              <option value="yomoyama">よもやま</option>
+            </select>
+          </div>
+
+          <!-- 期日選択 -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 mb-1">期日 (任意)</label>
+            <input 
+              type="date" 
+              id="taskDueDate" 
+              class="w-full px-2 py-2 rounded-xl border border-slate-300 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-700"
+            >
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          class="mt-1 w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.98] transition-all text-white font-medium py-2.5 rounded-xl text-sm shadow-sm flex items-center justify-center gap-1.5"
+        >
+          ＋ 登録する
+        </button>
+      </form>
+    </section>
+
+    <!-- フィルターセクション -->
+    <section class="flex flex-col gap-2.5">
+      <!-- 時期フィルター -->
+      <div>
+        <div class="text-[11px] font-semibold text-slate-500 px-1 mb-1.5 flex items-center gap-1">
+          <span>🕒</span> 時期で絞り込み
+        </div>
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <button type="button" class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-slate-800 text-white border-slate-800 shadow-sm" data-period="all">すべて</button>
+          <button type="button" class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-period="today">今日中</button>
+          <button type="button" class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-period="tomorrow">明日中</button>
+          <button type="button" class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-period="this_week">今週中</button>
+          <button type="button" class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-period="this_month">今月中</button>
+        </div>
+      </div>
+
+      <!-- カテゴリフィルター -->
+      <div>
+        <div class="text-[11px] font-semibold text-slate-500 px-1 mb-1.5 flex items-center gap-1">
+          <span>📁</span> カテゴリで絞り込み
+        </div>
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <button type="button" class="cat-btn px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-slate-800 text-white border-slate-800 shadow-sm" data-cat="all">すべて</button>
+          <button type="button" class="cat-btn px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-cat="work_task">仕事タスク</button>
+          <button type="button" class="cat-btn px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-cat="life_task">生活タスク</button>
+          <button type="button" class="cat-btn px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-cat="home_knowledge">家庭ナレッジ</button>
+          <button type="button" class="cat-btn px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-cat="work_knowledge">仕事ナレッジ</button>
+          <button type="button" class="cat-btn px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-cat="yomoyama">よもやま</button>
+        </div>
+      </div>
+
+      <!-- 完了状態タブ -->
+      <div class="flex justify-between items-center px-1 pt-1">
+        <div class="inline-flex rounded-lg p-0.5 bg-slate-200 text-xs">
+          <button type="button" id="tabActive" class="px-2.5 py-1 rounded-md font-medium text-slate-800 bg-white shadow-sm transition-all">未完了</button>
+          <button type="button" id="tabDone" class="px-2.5 py-1 rounded-md font-medium text-slate-600 transition-all">完了済み</button>
+        </div>
+        <button type="button" id="clearCompletedBtn" class="text-xs text-rose-500 hover:underline hidden">完了分を一括削除</button>
+      </div>
+    </section>
+
+    <!-- タスク一覧表示エリア -->
+    <ul id="taskContainer" class="flex flex-col gap-2.5 flex-1 pb-10"></ul>
+  </main>
+
+  <script>
+    const CATEGORIES = {
+      work_task: { label: '仕事タスク', badge: 'bg-blue-600 text-white' },
+      life_task: { label: '生活タスク', badge: 'bg-emerald-600 text-white' },
+      work_knowledge: { label: '仕事ナレッジ', badge: 'bg-sky-100 text-sky-800 border border-sky-300' },
+      home_knowledge: { label: '家庭ナレッジ', badge: 'bg-emerald-100 text-emerald-800 border border-emerald-300' },
+      yomoyama: { label: 'よもやま', badge: 'bg-amber-400 text-slate-900 font-semibold' }
+    };
+
+    const STORAGE_KEY = 'taskflow_v2_storage';
+    let tasks = [];
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      tasks = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(tasks)) tasks = [];
+    } catch (e) {
+      tasks = [];
+    }
+
+    let filterPeriod = 'all';
+    let filterCategory = 'all';
+    let isCompletedTab = false;
+
+    const todoForm = document.getElementById('todoForm');
+    const inputTitle = document.getElementById('taskTitle');
+    const selectCategory = document.getElementById('taskCategory');
+    const inputDueDate = document.getElementById('taskDueDate');
+    const container = document.getElementById('taskContainer');
+    const countBadge = document.getElementById('taskCountBadge');
+    const clearBtn = document.getElementById('clearCompletedBtn');
+    const tabActive = document.getElementById('tabActive');
+    const tabDone = document.getElementById('tabDone');
+    const periodButtons = document.querySelectorAll('.period-btn');
+    const categoryButtons = document.querySelectorAll('.cat-btn');
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function saveAndRender() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      } catch (e) {
+        console.error(e);
+      }
+      renderView();
+    }
+
+    function updateTabsUI() {
+      periodButtons.forEach(btn => {
+        const active = btn.dataset.period === filterPeriod;
+        btn.className = `period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap ${
+          active ? 'bg-slate-800 text-white border-slate-800 shadow-sm' : 'bg-white text-slate-600 border-slate-200'
+        }`;
+      });
+
+      categoryButtons.forEach(btn => {
+        const active = btn.dataset.cat === filterCategory;
+        btn.className = `cat-btn px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap ${
+          active ? 'bg-slate-800 text-white border-slate-800 shadow-sm' : 'bg-white text-slate-600 border-slate-200'
+        }`;
+      });
+
+      if (!isCompletedTab) {
+        tabActive.className = 'px-2.5 py-1 rounded-md font-medium text-slate-800 bg-white shadow-sm transition-all';
+        tabDone.className = 'px-2.5 py-1 rounded-md font-medium text-slate-600 transition-all';
+      } else {
+        tabActive.className = 'px-2.5 py-1 rounded-md font-medium text-slate-600 transition-all';
+        tabDone.className = 'px-2.5 py-1 rounded-md font-medium text-slate-800 bg-white shadow-sm transition-all';
+      }
+    }
+
+    function formatYMD(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function matchPeriod(dueDateStr, period) {
+      if (period === 'all') return true;
+      if (!dueDateStr) return false;
+
+      const now = new Date();
+      const todayStr = formatYMD(now);
+
+      if (period === 'today') return dueDateStr <= todayStr;
+
+      if (period === 'tomorrow') {
+        const tom = new Date(now);
+        tom.setDate(now.getDate() + 1);
+        return dueDateStr <= formatYMD(tom);
+      }
+
+      if (period === 'this_week') {
+        const day = now.getDay();
+        const diff = (7 - day) % 7;
+        const sunday = new Date(now);
+        sunday.setDate(now.getDate() + diff);
+        return dueDateStr <= formatYMD(sunday);
+      }
+
+      if (period === 'this_month') {
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        return dueDateStr <= formatYMD(lastDay);
+      }
+
+      return true;
+    }
+
+    function renderView() {
+      const filtered = tasks.filter(item => {
+        if (Boolean(item.completed) !== isCompletedTab) return false;
+        if (filterCategory !== 'all' && item.category !== filterCategory) return false;
+        if (filterPeriod !== 'all' && !matchPeriod(item.dueDate, filterPeriod)) return false;
+        return true;
+      });
+
+      const activeCount = tasks.filter(t => !t.completed).length;
+      countBadge.textContent = `未完了 ${activeCount} 件`;
+      clearBtn.classList.toggle('hidden', !tasks.some(t => t.completed));
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
+            <div class="text-3xl mb-2">📂</div>
+            <p class="text-xs">該当するタスクはありません</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+        const cat = CATEGORIES[item.category] || CATEGORIES.work_task;
+        return `
+          <li class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-start gap-3">
+            <button type="button" onclick="handleToggle(${item.id})" class="mt-0.5 text-lg leading-none cursor-pointer">
+              ${item.completed ? '<span class="text-emerald-600 font-bold">☑</span>' : '<span class="text-slate-300 font-bold">☐</span>'}
+            </button>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium leading-relaxed break-words ${item.completed ? 'line-through text-slate-400' : 'text-slate-800'}">
+                ${escapeHtml(item.title)}
+              </p>
+              <div class="flex flex-wrap items-center gap-2 mt-2">
+                <span class="text-[10px] px-2 py-0.5 rounded-md ${cat.badge}">${cat.label}</span>
+                ${item.dueDate ? `
+                  <span class="text-[11px] text-slate-500 flex items-center gap-1 font-sans">
+                    📅 ${item.dueDate}
+                  </span>
+                ` : `<span class="text-[10px] text-slate-400">期日なし</span>`}
+              </div>
+            </div>
+            <button type="button" onclick="handleDelete(${item.id})" class="text-slate-300 hover:text-rose-500 p-1 cursor-pointer font-bold text-sm">
+              ✕
+            </button>
+          </li>
+        `;
+      }).join('');
+    }
+
+    // フォーム送信
+    todoForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = inputTitle.value.trim();
+      if (!text) return;
+
+      tasks.unshift({
+        id: Date.now(),
+        title: text,
+        category: selectCategory.value,
+        dueDate: inputDueDate.value || null,
+        completed: false,
+        createdAt: new Date().toISOString()
+      });
+
+      isCompletedTab = false;
+      filterPeriod = 'all';
+      filterCategory = 'all';
+      updateTabsUI();
+
+      inputTitle.value = '';
+      inputDueDate.value = '';
+      saveAndRender();
+    });
+
+    window.handleToggle = function(id) {
+      tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+      saveAndRender();
+    };
+
+    window.handleDelete = function(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      saveAndRender();
+    };
+
+    clearBtn.addEventListener('click', () => {
+      if (confirm('完了済みの項目をすべて削除しますか？')) {
+        tasks = tasks.filter(t => !t.completed);
+        saveAndRender();
+      }
+    });
+
+    tabActive.addEventListener('click', () => {
+      isCompletedTab = false;
+      updateTabsUI();
+      renderView();
+    });
+
+    tabDone.addEventListener('click', () => {
+      isCompletedTab = true;
+      updateTabsUI();
+      renderView();
+    });
+
+    periodButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterPeriod = btn.dataset.period;
+        updateTabsUI();
+        renderView();
+      });
+    });
+
+    categoryButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterCategory = btn.dataset.cat;
+        updateTabsUI();
+        renderView();
+      });
+    });
+
+    updateTabsUI();
+    renderView();
+  </script>
+</body>
+</html>
