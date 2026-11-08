@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>タスク管理2</title>
+
+  <!-- PWA / スマホホーム画面用設定 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="タスク管理2">
+  <meta name="theme-color" content="#1e293b">
+
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    /* 横スクロールバーの非表示 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
+
+  <!-- ヘッダー -->
+  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-xl mx-auto px-4 py-3.5 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-layer-group text-sky-400 text-lg"></i>
+        <h1 class="font-bold text-base tracking-wide">タスク管理 2</h1>
+      </div>
+      <span id="taskCount" class="text-xs bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full">0 件</span>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="max-w-xl mx-auto w-full px-4 py-4 flex-1 flex flex-col gap-4">
+
+    <!-- 入力フォーム -->
+    <section class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+      <form id="todoForm" class="flex flex-col gap-3">
+        <input 
+          type="text" 
+          id="taskTitle" 
+          placeholder="タスク・ナレッジを入力..." 
+          required 
+          class="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-700 text-sm placeholder:text-slate-400"
+        >
+        
+        <div class="grid grid-cols-2 gap-2">
+          <!-- カテゴリ選択 -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 mb-1">カテゴリ</label>
+            <select 
+              id="taskCategory" 
+              class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-700 font-medium"
+            >
+              <option value="work_task">仕事タスク</option>
+              <option value="life_task">生活タスク</option>
+              <option value="home_knowledge">家庭ナレッジ</option>
+              <option value="work_knowledge">仕事ナレッジ</option>
+              <option value="yomoyama">よもやま</option>
+            </select>
+          </div>
+
+          <!-- 期日選択 -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 mb-1">期日 (任意)</label>
+            <input 
+              type="date" 
+              id="taskDueDate" 
+              class="w-full px-2.5 py-2 rounded-xl border border-slate-300 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-700"
+            >
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          class="mt-1 w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.98] transition-all text-white font-medium py-2.5 rounded-xl text-sm shadow-sm flex items-center justify-center gap-1.5"
+        >
+          <i class="fa-solid fa-plus text-xs"></i> 登録する
+        </button>
+      </form>
+    </section>
+
+    <!-- フィルターセクション -->
+    <section class="flex flex-col gap-2.5">
+      <!-- 時期フィルター -->
+      <div>
+        <div class="text-[11px] font-semibold text-slate-500 px-1 mb-1.5 flex items-center gap-1">
+          <i class="fa-regular fa-clock text-[10px]"></i> 時期で絞り込み
+        </div>
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <button class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-slate-800 text-white border-slate-800 shadow-sm" data-period="all">すべて</button>
+          <button class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-period="today">今日中</button>
+          <button class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-period="tomorrow">明日中</button>
+          <button class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-period="this_week">今週中</button>
+          <button class="period-btn px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap bg-white text-slate-600 border-slate-200" data-period="this_month">今月中</button>
+        </div>
+      </div>
+
+      <!-- カテゴリフィルター -->
+      <div>
+        <div class="text-[11px] font-semibold text-slate-500 px-1 mb-1.5 flex items-center gap-1">
+          <i class="fa-regular fa-folder text-[10px]"></i> カテゴリで絞り込み
+        </div>
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <button class="cat-btn px-2.5 py-1.5 rounded-lg
